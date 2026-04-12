@@ -1,7 +1,7 @@
 from anthropic import Anthropic
 from dotenv import load_dotenv
 
-from model_evaluation import generate_evaluation_set, run_all_test_cases, grade_by_model
+from model_evaluation import generate_evaluation_set, run_all_test_cases, grade_by_model, average_score, recommend_prompt_improvements
 from helpers.cache import cached
 from helpers.prompt import run_prompt
 
@@ -13,19 +13,20 @@ load_dotenv("config.env")
 client = Anthropic()
 
 
-def leetcode_easy_solver(client: Anthropic, problem_description: str) -> str:
-    additional_instructions = """
+SOLVER_PROMPT = """
     Just write the Python function, without any explanations. Your snippet should
     start with the function definition, and end with the end of the function.
     Do not include any text before or after the code snippet. The solution should
     use the function signature provided in the task description.
     """
 
+
+def leetcode_easy_solver(client: Anthropic, problem_description: str) -> str:
     return run_prompt(
         client,
         problem_description,
         assistant_prompt="```python",
-        system_prompt=additional_instructions,
+        system_prompt=SOLVER_PROMPT,
         model="claude-haiku-4-5"
     )
 
@@ -58,3 +59,7 @@ for evaluation in grader_results:
     print(f"Reasoning: {evaluation['reasoning']}\n")
     print(f"Score: {evaluation['score']}\n")
     print("-" * 50)
+
+print(f"Average score: {average_score(grader_results):.1f}\n")
+print("Prompt improvement recommendations:")
+print(recommend_prompt_improvements(client, SOLVER_PROMPT, grader_results))

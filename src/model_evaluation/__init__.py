@@ -1,3 +1,3 @@
 from .dataset import generate_evaluation_set
 from .runner import run_single_test_case, run_all_test_cases
-from .grader import grade_by_model
+from .grader import grade_by_model, average_score, recommend_prompt_improvements
