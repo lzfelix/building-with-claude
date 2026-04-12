@@ -10,6 +10,7 @@ def generate_evaluation_set(
         client: Anthropic,
         task_description: str,
         model: str="claude-haiku-4-5",
+        additional_instructions: list[str] | None=None,
         max_tokens: int=10000,
         num_samples: int=100) -> list[dict]:
     prompt = f"""Generate an evaluation dataset for a prompt evaluation.
@@ -29,8 +30,9 @@ def generate_evaluation_set(
     * Focus on tasks that are relevant to the task description.
     * Ensure that the expected output is clear and unambiguous.
     * Avoid generating tasks that are too similar to each other.
-    * Avoid generating tasks that are too difficult or too easy. Aim for a range of difficulty levels.
     """
+    if additional_instructions:
+        prompt += "\n" + "\n".join(f"* {instruction}" for instruction in additional_instructions)
 
     response = client.messages.create(
         model=model,
@@ -43,14 +45,14 @@ def generate_evaluation_set(
     return json.loads(flat_output)
 
 
-def persist_evaluation_set_as_jsonl(evaluation_set: list[dict], file_path: str):
+def save_as_jsonl(evaluation_set: list[dict], file_path: str):
     with open(file_path, "w") as f:
         for item in evaluation_set:
             json_line = json.dumps(item)
             f.write(json_line + "\n")
 
 
-def load_evaluation_set_from_jsonl(file_path: str) -> list[dict]:
+def load_jsonl(file_path: str) -> list[dict]:
     evaluation_set = []
     with open(file_path, "r") as f:
         for line in f:
@@ -58,25 +60,21 @@ def load_evaluation_set_from_jsonl(file_path: str) -> list[dict]:
     return evaluation_set
 
 
-def run_test_case(
+def run_single_test_case(
         client: Anthropic,
         evaluated_fn: Callable,
         test_case: dict) -> dict:
-    
-    predicted_response = evaluated_fn(client, test_case["task"])
-    score = 10
 
     return {
         "task": test_case["task"],
         "expected_output": test_case["expected_output"],
-        "predicted_output": predicted_response,
-        "score": score
+        "predicted_output": evaluated_fn(client, test_case["task"])
     }
 
 
-def run_eval(client: Anthropic, evaluated_fn: Callable, dataset: list[dict]):
+def run_all_test_cases(client: Anthropic, evaluated_fn: Callable, dataset: list[dict]):
     return [
-        run_test_case(client, evaluated_fn, test_case)
+        run_single_test_case(client, evaluated_fn, test_case)
         for test_case in dataset
     ]
 
@@ -109,7 +107,8 @@ def run_prompt(
 
 
 if __name__ == "__main__":
-    EVALUATION_SET_PATH = "evaluation_set.jsonl"
+    EVALUATION_SET_PATH = "./resources/evaluation_set.jsonl"
+    ATTEMPTED_SOLUTIONS_PATH = "./resources/attempted_solutions.jsonl"
 
     load_dotenv("config.env")
     client = Anthropic()
@@ -118,8 +117,8 @@ if __name__ == "__main__":
         additional_instructions = """
         Just write the Python function, without any explanations. Your snippet should
         start with the function definition, and end with the end of the function.
-        Do not include any text before or after the code snippet. The function should
-        always be named "solution".
+        Do not include any text before or after the code snippet. The solution should
+        use the function signature provided in the task description.
         """
 
         return run_prompt(
@@ -131,10 +130,26 @@ if __name__ == "__main__":
         )
 
     if not os.path.exists(EVALUATION_SET_PATH):
-        evaluation_set = generate_evaluation_set(client, "assess the quality of Python scripts for solving basic leetcode questions", num_samples=3)
-        persist_evaluation_set_as_jsonl(evaluation_set, EVALUATION_SET_PATH)
+        print("Generating evaluation set...")
+        evaluation_set = generate_evaluation_set(
+            client,
+            "assess the quality of Python scripts for solving basic leetcode questions",
+            additional_instructions=[
+                "The task description should finish with the expected function signature, expected parameters, and return type. For example, def twoSum(nums: List[int], target: int) -> List[int]:",
+                "Include examples of input and output for each task. For example, for the twoSum problem, you could include an example like: Input: nums = [2,7,11,15], target = 9; Output: [0,1]."
+            ],
+            num_samples=3)
+        save_as_jsonl(evaluation_set, EVALUATION_SET_PATH)
     else:
-        evaluation_set = load_evaluation_set_from_jsonl(EVALUATION_SET_PATH)
+        print("Evaluation set already exists, loading from file...")
+        evaluation_set = load_jsonl(EVALUATION_SET_PATH)
 
-    evaluation_report = run_eval(client, leetcode_easy_solver, evaluation_set)
-    print(json.dumps(evaluation_report, indent=2))
+    if not os.path.exists(ATTEMPTED_SOLUTIONS_PATH):
+        print("Generating attempted solutions...")
+        attempted_solutions = run_all_test_cases(client, leetcode_easy_solver, evaluation_set)
+        save_as_jsonl(attempted_solutions, ATTEMPTED_SOLUTIONS_PATH)
+    else:
+        print("Attempted solutions already exist, loading from file...")
+        attempted_solutions = load_jsonl(ATTEMPTED_SOLUTIONS_PATH)
+
+    print(json.dumps(attempted_solutions, indent=2))
