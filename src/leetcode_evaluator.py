@@ -30,14 +30,17 @@ def leetcode_easy_solver(client: Anthropic, problem_description: str) -> str:
     )
 
 
-evaluation_set = cached(EVALUATION_SET_PATH, lambda: generate_evaluation_set(
-    client,
-    "assess the quality of Python scripts for solving basic leetcode questions",
-    additional_instructions=[
-        "The task description should finish with the expected function signature, expected parameters, and return type. For example, def twoSum(nums: List[int], target: int) -> List[int]:",
-        "Include examples of input and output for each task. For example, for the twoSum problem, you could include an example like: Input: nums = [2,7,11,15], target = 9; Output: [0,1]."
-    ],
-    num_samples=3))
+evaluation_set = cached(EVALUATION_SET_PATH,
+    lambda: generate_evaluation_set(
+        client,
+        "assess the quality of Python scripts for solving basic leetcode questions",
+        additional_instructions=[
+            "The task description should finish with the expected function signature, expected parameters,"
+                "and return type. For example, def twoSum(nums: List[int], target: int) -> List[int]:",
+            "Include examples of input and output for each task. For example, for the twoSum problem, you could"
+                "include an example like: Input: nums = [2,7,11,15], target = 9; Output: [0,1]."
+        ],
+        num_samples=3))
 
 attempted_solutions = cached(ATTEMPTED_SOLUTIONS_PATH,
     lambda: run_all_test_cases(client, leetcode_easy_solver, evaluation_set))
