@@ -83,6 +83,7 @@ def run_prompt(
         client: Anthropic,
         prompt: str,
         model: str,
+        stop_sequences: list[str] | None=None,
         assistant_prompt: str | None=None,
         max_tokens: int=10000,
         system_prompt: str | None=None) -> str:
@@ -96,19 +97,47 @@ def run_prompt(
     args = {
         "model": model,
         "max_tokens": max_tokens,
-        "messages": messages,
-        "stop_sequences": ["```"]
+        "messages": messages
     }
     if system_prompt:
         args["system"] = system_prompt
+    if stop_sequences:
+        args["stop_sequences"] = stop_sequences
 
     response = client.messages.create(**args)
     return response.content[0].text
 
 
+def grade_by_model(client: Anthropic, test_case: dict) -> dict:
+    # Create evaluation prompt
+    eval_prompt = f"""
+    You are an expert code reviewer. Evaluate this AI-generated solution.
+
+    Task: {test_case['task']}
+    Generated solution: {test_case['predicted_output']}
+    Ground truth solution: {test_case['expected_output']}
+
+    Provide your evaluation as a structured JSON object with:
+    - "strengths": An array of 1-3 key strengths
+    - "weaknesses": An array of 1-3 key areas for improvement
+    - "reasoning": A concise explanation of your assessment and why not maximum grade was given, if applicable.
+    - "score": A number between 1-10
+
+    The generated solution does not need to match perfectly the ground truth
+    to receive a high score, as there can be multiple valid approaches.
+    Focus on the correctness, efficiency, and clarity of the generated solution.
+    """
+
+    model_output = run_prompt(client, eval_prompt, model="claude-haiku-4-5", assistant_prompt="```json", stop_sequences=["```"])
+
+    evaluation_report = json.loads(model_output)
+    return evaluation_report | test_case
+
+
 if __name__ == "__main__":
     EVALUATION_SET_PATH = "./resources/evaluation_set.jsonl"
     ATTEMPTED_SOLUTIONS_PATH = "./resources/attempted_solutions.jsonl"
+    GRADER_RESULTS_PATH = "./resources/grader_results.jsonl"
 
     load_dotenv("config.env")
     client = Anthropic()
@@ -152,4 +181,24 @@ if __name__ == "__main__":
         print("Attempted solutions already exist, loading from file...")
         attempted_solutions = load_jsonl(ATTEMPTED_SOLUTIONS_PATH)
 
-    print(json.dumps(attempted_solutions, indent=2))
+    if not os.path.exists(GRADER_RESULTS_PATH):
+        print("Grading attempted solutions...")
+        grader_results = [
+            grade_by_model(client, attempted_solution)
+            for attempted_solution in attempted_solutions
+        ]
+        save_as_jsonl(grader_results, GRADER_RESULTS_PATH)
+    else:
+        print("Grader results already exist, loading from file...")
+        grader_results = load_jsonl(GRADER_RESULTS_PATH)
+
+    for evaluation in grader_results:
+        print(f"Task: {evaluation['task']}\n")
+        print(f"Expected Output: {evaluation['expected_output']}\n")
+        print(f"Predicted Output: {evaluation['predicted_output']}\n")
+        print("Evaluation Report:")
+        print(f"Strengths: {evaluation['strengths']}\n")
+        print(f"Weaknesses: {evaluation['weaknesses']}\n")
+        print(f"Reasoning: {evaluation['reasoning']}\n")
+        print(f"Score: {evaluation['score']}\n")
+        print("-" * 50)
