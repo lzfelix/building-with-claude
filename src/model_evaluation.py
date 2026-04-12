@@ -1,9 +1,10 @@
-import os
 import json
 from typing import Callable
 
 from anthropic import Anthropic
 from dotenv import load_dotenv
+
+from helpers.cache import cached
 
 
 def generate_evaluation_set(
@@ -44,20 +45,6 @@ def generate_evaluation_set(
     flat_output = flat_output.replace("```json", "").replace("```", "")
     return json.loads(flat_output)
 
-
-def save_as_jsonl(evaluation_set: list[dict], file_path: str):
-    with open(file_path, "w") as f:
-        for item in evaluation_set:
-            json_line = json.dumps(item)
-            f.write(json_line + "\n")
-
-
-def load_jsonl(file_path: str) -> list[dict]:
-    evaluation_set = []
-    with open(file_path, "r") as f:
-        for line in f:
-            evaluation_set.append(json.loads(line))
-    return evaluation_set
 
 
 def run_single_test_case(
@@ -158,39 +145,20 @@ if __name__ == "__main__":
             model="claude-haiku-4-5"
         )
 
-    if not os.path.exists(EVALUATION_SET_PATH):
-        print("Generating evaluation set...")
-        evaluation_set = generate_evaluation_set(
-            client,
-            "assess the quality of Python scripts for solving basic leetcode questions",
-            additional_instructions=[
-                "The task description should finish with the expected function signature, expected parameters, and return type. For example, def twoSum(nums: List[int], target: int) -> List[int]:",
-                "Include examples of input and output for each task. For example, for the twoSum problem, you could include an example like: Input: nums = [2,7,11,15], target = 9; Output: [0,1]."
-            ],
-            num_samples=3)
-        save_as_jsonl(evaluation_set, EVALUATION_SET_PATH)
-    else:
-        print("Evaluation set already exists, loading from file...")
-        evaluation_set = load_jsonl(EVALUATION_SET_PATH)
+    evaluation_set = cached(EVALUATION_SET_PATH, lambda: generate_evaluation_set(
+        client,
+        "assess the quality of Python scripts for solving basic leetcode questions",
+        additional_instructions=[
+            "The task description should finish with the expected function signature, expected parameters, and return type. For example, def twoSum(nums: List[int], target: int) -> List[int]:",
+            "Include examples of input and output for each task. For example, for the twoSum problem, you could include an example like: Input: nums = [2,7,11,15], target = 9; Output: [0,1]."
+        ],
+        num_samples=3))
 
-    if not os.path.exists(ATTEMPTED_SOLUTIONS_PATH):
-        print("Generating attempted solutions...")
-        attempted_solutions = run_all_test_cases(client, leetcode_easy_solver, evaluation_set)
-        save_as_jsonl(attempted_solutions, ATTEMPTED_SOLUTIONS_PATH)
-    else:
-        print("Attempted solutions already exist, loading from file...")
-        attempted_solutions = load_jsonl(ATTEMPTED_SOLUTIONS_PATH)
+    attempted_solutions = cached(ATTEMPTED_SOLUTIONS_PATH,
+        lambda: run_all_test_cases(client, leetcode_easy_solver, evaluation_set))
 
-    if not os.path.exists(GRADER_RESULTS_PATH):
-        print("Grading attempted solutions...")
-        grader_results = [
-            grade_by_model(client, attempted_solution)
-            for attempted_solution in attempted_solutions
-        ]
-        save_as_jsonl(grader_results, GRADER_RESULTS_PATH)
-    else:
-        print("Grader results already exist, loading from file...")
-        grader_results = load_jsonl(GRADER_RESULTS_PATH)
+    grader_results = cached(GRADER_RESULTS_PATH,
+        lambda: [grade_by_model(client, s) for s in attempted_solutions])
 
     for evaluation in grader_results:
         print(f"Task: {evaluation['task']}\n")
