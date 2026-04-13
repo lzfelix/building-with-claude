@@ -120,6 +120,23 @@ Optimization Requirements:
 | Median of Two Sorted Arrays | 9 | 8 | -1 |
 | **Average** | **8.5** | **8.6** | **+0.1** |
 
+### Observed strengths
+
+- Correct algorithms with optimal time complexity maintained across all problems
+- Import statements now consistently included (`from typing import List/Optional`)
+- `enumerate()` adopted in place of `range(len())` for iteration
+- Well-documented code with comments explaining algorithmic choices and greedy strategies
+- Edge cases handled correctly in all solutions
+
+### Observed weaknesses
+
+- Unreachable return statements persist — `return []` when the problem guarantees a solution (Two Sum), `return -1.0` in Median of Two Sorted Arrays
+- Unused variable introduced — `original = x` assigned but never referenced (Palindrome Integer)
+- `len(stack) == 0` still used instead of `not stack` (Valid Parentheses)
+- Index-tracking approach in Longest Palindromic Substring instead of returning the substring directly from the helper
+- Duplicated binary search logic in Search Range instead of extracting a shared helper
+- Explanation text leaked outside the code block in several solutions (Product Except Self, Container With Most Water, Median of Two Sorted Arrays)
+
 ### What improved
 
 - **Import statements** — round 2 solutions consistently included `from typing import List/Optional`, directly addressing the top weakness from round 1
