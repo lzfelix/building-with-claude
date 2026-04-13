@@ -72,4 +72,4 @@ The grader recommended adding explicit guidance in six areas:
 5. **Formatting** — single line unless the query exceeds ~120 characters
 6. **No defensive coding** — skip `NULL` checks and input validation unless the task mentions missing data
 
-A follow-up round will incorporate these suggestions.
+A follow-up round could incorporate these suggestions.
