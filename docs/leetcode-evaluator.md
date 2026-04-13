@@ -160,3 +160,7 @@ The grader identified further refinements to the prompt:
 5. **Pythonic boolean checks** — reinforce `not stack`, `not array`, `if value` patterns with concrete examples
 
 A follow-up round will incorporate these suggestions.
+
+## Conclusion
+
+This report is just an exploration on how model evaluation works. I believe generating more complex problems (where the LLM struggles more to find a solution) would provide a richer search space where the grader could help in refining the prompt. Another interesting insight is that this pipeline could be used for other tasks as well.
