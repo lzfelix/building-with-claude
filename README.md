@@ -16,3 +16,4 @@ Detailed write-ups for each example can be found in the [`docs/`](docs/) directo
 |---|---|
 | [LeetCode Evaluator](docs/leetcode-evaluator.md) | Evaluates an LLM-generated Python solver across LeetCode-style problems using a multi-stage grading pipeline |
 | [SQL Review](docs/sql-review.md) | Evaluates an LLM-generated PostgreSQL query solver across tasks from simple SELECT to window functions |
+| Reminder Assistant | A multi-turn chatbot that uses tools to get the current datetime, do date arithmetic, and manage in-memory reminders |
