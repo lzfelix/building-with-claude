@@ -5,14 +5,6 @@ from anthropic import Anthropic
 from anthropic.types import Message
 
 
-_all_tools = [
-    tools.get_current_datetime_schema,
-    tools.add_duration_to_datetime_schema,
-    tools.set_reminder_schema,
-    tools.get_reminders_schema
-]
-
-
 def chat(client: Anthropic, model: str, messages: list, tools: list):
     system_prompt = "You are a helpful assistant that provides the current date and time when asked."
 
@@ -37,19 +29,6 @@ def text_from_message(message):
     return "\n".join([b.text for b in message.content if b.type == "text"])
 
 
-def run_tool(tool_name, tool_input):
-    if tool_name == "get_current_datetime":
-        return tools.get_current_datetime(**tool_input)
-    elif tool_name == "add_duration_to_datetime":
-        return tools.add_duration_to_datetime(**tool_input)
-    elif tool_name == "set_reminder":
-        return tools.set_reminder(**tool_input)
-    elif tool_name == "get_reminders":
-        return tools.get_reminders()
-    else:
-        raise ValueError(f"Unknown tool: {tool_name}")
-
-
 def run_tools(message):
     tool_requests = [
         block for block in message.content if block.type == "tool_use"
@@ -58,7 +37,7 @@ def run_tools(message):
 
     for tool_request in tool_requests:
         try:
-            result = run_tool(tool_request.name, tool_request.input)
+            result = tools.registry.dispatch(tool_request.name, tool_request.input)
             tool_result_blocks.append({
                 "type": "tool_result",
                 "tool_use_id": tool_request.id,
@@ -77,7 +56,7 @@ def run_tools(message):
 
 def run_conversation(client, model, messages):
     while True:
-        response = chat(client, model, messages, tools=_all_tools)
+        response = chat(client, model, messages, tools=tools.registry.schemas)
         add_message("assistant", messages, response)
         
         text_response = text_from_message(response)

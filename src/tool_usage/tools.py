@@ -2,39 +2,37 @@ import json
 from datetime import datetime
 from collections import defaultdict
 
-from anthropic.types import ToolParam
+from helpers.tool_registry import ToolRegistry
 
 
-# This will store reminders in-memory for demonstration purposes
 __reminders__ = defaultdict(list)
 
+registry = ToolRegistry()
 
-def get_current_datetime(date_format="%Y-%m-%d %H:%M:%S"):
+
+@registry.tool(
+    description="Returns the current date and time formatted according to the specified format string.",
+    param_descriptions={
+        "date_format": "A strftime-compatible format string used to format the current datetime."
+    }
+)
+def get_current_datetime(date_format: str = "%Y-%m-%d %H:%M:%S"):
     if not date_format:
         raise ValueError("date_format cannot be empty.")
     return datetime.now().strftime(date_format)
 
 
-get_current_datetime_schema = ToolParam({
-    "name": "get_current_datetime",
-    "description": "Returns the current date and time formatted according to the specified format string.",
-    "input_schema": {
-        "type": "object",
-        "properties": {
-        "date_format": {
-            "type": "string",
-            "description": "A strftime-compatible format string used to format the current datetime.",
-            "default": "%Y-%m-%d %H:%M:%S"
-        }
-        },                                                                      
-            "required": ["date_format"]
+@registry.tool(
+    description="Adds a duration to a base datetime and returns the result formatted according to the specified output format.",
+    param_descriptions={
+        "base_datetime": "The base datetime in the format '%Y-%m-%d %H:%M:%S'.",
+        "duration": "The duration to add, specified as a string like '10s', '5m', '2h', '1d' (for seconds, minutes, hours, days).",
+        "output_format": "A strftime-compatible format string used to format the resulting datetime."
     }
-})
-
-
-def add_duration_to_datetime(base_datetime: str, duration: str, output_format: str="%Y-%m-%d %H:%M:%S"):
-    from datetime import datetime, timedelta
+)
+def add_duration_to_datetime(base_datetime: str, duration: str, output_format: str = "%Y-%m-%d %H:%M:%S"):
     import re
+    from datetime import timedelta
 
     dt = datetime.strptime(base_datetime, "%Y-%m-%d %H:%M:%S")
 
@@ -57,65 +55,18 @@ def add_duration_to_datetime(base_datetime: str, duration: str, output_format: s
     return dt.strftime(output_format)
 
 
-add_duration_to_datetime_schema = ToolParam({
-    "name": "add_duration_to_datetime",
-    "description": "Adds a duration to a base datetime and returns the result formatted according to the specified output format.",
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "base_datetime": {
-                "type": "string",
-                "description": "The base datetime in the format '%Y-%m-%d %H:%M:%S'."
-            },
-            "duration": {
-                "type": "string",
-                "description": "The duration to add, specified as a string like '10s', '5m', '2h', '1d' (for seconds, minutes, hours, days)."
-            },
-            "output_format": {
-                "type": "string",
-                "description": "A strftime-compatible format string used to format the resulting datetime.",
-                "default": "%Y-%m-%d %H:%M:%S"
-            }
-        },
-        "required": ["base_datetime", "duration"]
+@registry.tool(
+    description="Sets a reminder for a specific time with a message.",
+    param_descriptions={
+        "reminder_time": "The time to set the reminder for, in the format '%Y-%m-%d %H:%M:%S'.",
+        "message": "The message to be reminded of."
     }
-})
-
-
+)
 def set_reminder(reminder_time: str, message: str):
-    # This is a placeholder implementation. In a real application, you would integrate with a scheduling system.
     __reminders__[reminder_time].append(message)
     return f"Reminder set for {reminder_time} with message: '{message}'"
 
 
-set_reminder_schema = ToolParam({
-    "name": "set_reminder",
-    "description": "Sets a reminder for a specific time with a message.",
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "reminder_time": {
-                "type": "string",
-                "description": "The time to set the reminder for, in the format '%Y-%m-%d %H:%M:%S'."
-            },
-            "message": {
-                "type": "string",
-                "description": "The message to be reminded of."
-            }
-        },
-        "required": ["reminder_time", "message"]
-    }
-})
-
-
+@registry.tool(description="Retrieves all currently set reminders.")
 def get_reminders():
     return json.dumps(__reminders__)
-
-get_reminders_schema = ToolParam({
-    "name": "get_reminders",
-    "description": "Retrieves all currently set reminders.",
-    "input_schema": {
-        "type": "object",
-        "properties": {}
-    }
-})
