@@ -7,9 +7,9 @@ from helpers.prompt import run_prompt
 
 
 if __name__ == "__main__":
-    EVALUATION_SET_PATH      = "./resources/evaluation_set.jsonl"
-    ATTEMPTED_SOLUTIONS_PATH = "./resources/r2_attempted_solutions.jsonl"
-    GRADER_RESULTS_PATH      = "./resources/r2_grader_results.jsonl"
+    EVALUATION_SET_PATH      = "./resources/model_evaluation/evaluation_set.jsonl"
+    ATTEMPTED_SOLUTIONS_PATH = "./resources/model_evaluation/r2_attempted_solutions.jsonl"
+    GRADER_RESULTS_PATH      = "./resources/model_evaluation/r2_grader_results.jsonl"
     NUM_TEST_CASES           = 10
 
     SOLVER_PROMPT = """
