@@ -3,19 +3,18 @@ from tool_usage import tools
 from dotenv import load_dotenv
 from anthropic import Anthropic
 from anthropic.types import Message
+from helpers.prompt import multi_block_prompt
 
 
 def chat(client: Anthropic, model: str, messages: list, tools: list):
     system_prompt = "You are a helpful assistant that provides the current date and time when asked."
-
-    result = client.messages.create(
+    return multi_block_prompt(
+        client,
+        messages,
         model=model,
-        max_tokens=1000,
-        messages=messages,
-        system=system_prompt,
+        system_prompt=system_prompt,
         tools=tools
     )
-    return result
 
 
 def add_message(role, messages, message):
