@@ -47,6 +47,7 @@ class ToolRegistry:
             raise ValueError(f"Unknown tool: {name}")
         return self._tools[name](**inputs)
 
+    # TODO: Ideally, this shouldn't be here
     def run_tools(self, response) -> list[dict]:
         results = []
         for block in response.content:
