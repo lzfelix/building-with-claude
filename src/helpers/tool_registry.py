@@ -1,4 +1,6 @@
 import inspect
+import copy
+
 from typing import Any, Callable, get_type_hints
 from anthropic.types import ToolParam
 
@@ -33,10 +35,30 @@ class ToolRegistry:
     def schemas(self) -> list[ToolParam]:
         return self._schemas
 
+    @property
+    def schemas_as_cacheable(self) -> list[ToolParam]:
+        schemas = copy.deepcopy(self._schemas)
+        if schemas:
+            schemas[-1]["cache_control"] = {"type": "ephemeral"}
+        return schemas
+
     def dispatch(self, name: str, inputs: dict[str, Any]) -> Any:
         if name not in self._tools:
             raise ValueError(f"Unknown tool: {name}")
         return self._tools[name](**inputs)
+
+    # TODO: Ideally, this shouldn't be here
+    def run_tools(self, response) -> list[dict]:
+        results = []
+        for block in response.content:
+            if block.type != "tool_use":
+                continue
+            try:
+                result = self.dispatch(block.name, block.input)
+                results.append({"type": "tool_result", "tool_use_id": block.id, "content": result, "is_error": False})
+            except Exception as e:
+                results.append({"type": "tool_result", "tool_use_id": block.id, "content": str(e), "is_error": True})
+        return results
 
 
 def _first_docstring_line(fn: Callable) -> str:
