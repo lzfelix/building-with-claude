@@ -2,63 +2,27 @@ import os
 from tool_usage import tools
 from dotenv import load_dotenv
 from anthropic import Anthropic
-from anthropic.types import Message
+from helpers import messages
 from helpers.prompt import multi_block_prompt
 
 
-def chat(client: Anthropic, model: str, messages: list, tools: list):
+def chat(client: Anthropic, model: str, conversation: list, tools: list):
     system_prompt = "You are a helpful assistant that provides the current date and time when asked."
     return multi_block_prompt(
         client,
-        messages,
+        conversation,
         model=model,
         system_prompt=system_prompt,
         tools=tools
     )
 
 
-def add_message(role, messages, message):
-    messages.append({
-        "role": role,
-        "content": message.content if isinstance(message, Message) else message
-    })
-
-
-def text_from_message(message):
-    return "\n".join([b.text for b in message.content if b.type == "text"])
-
-
-def run_tools(message):
-    tool_requests = [
-        block for block in message.content if block.type == "tool_use"
-    ]
-    tool_result_blocks = []
-
-    for tool_request in tool_requests:
-        try:
-            result = tools.registry.dispatch(tool_request.name, tool_request.input)
-            tool_result_blocks.append({
-                "type": "tool_result",
-                "tool_use_id": tool_request.id,
-                "content": result,
-                "is_error": False
-            })
-        except Exception as e:
-            tool_result_blocks.append({
-                "type": "tool_result",
-                "tool_use_id": tool_request.id,
-                "content": str(e),
-                "is_error": True
-            })
-    return tool_result_blocks
-
-
-def run_conversation(client, model, messages):
+def run_conversation(client, model, conversation):
     while True:
-        response = chat(client, model, messages, tools=tools.registry.schemas)
-        add_message("assistant", messages, response)
-        
-        text_response = text_from_message(response)
+        response = chat(client, model, conversation, tools=tools.registry.schemas)
+        messages.add_message("assistant", conversation, response)
+
+        text_response = messages.text_from_message(response)
 
         if response.stop_reason != "tool_use":
             print(f"\tFinished intermediate steps.")
@@ -67,9 +31,9 @@ def run_conversation(client, model, messages):
         else:
             print(f"\tIntermediate response: {text_response if text_response else '[No text response]'}")
 
-        tool_result_blocks = run_tools(response)
-        add_message("user", messages, tool_result_blocks)
-    return messages
+        tool_result_blocks = tools.registry.run_tools(response)
+        messages.add_message("user", conversation, tool_result_blocks)
+    return conversation
 
 
 if __name__ == "__main__":
@@ -96,7 +60,7 @@ if __name__ == "__main__":
         if user_prompt == "exit":
             break
 
-        conversation_history.append({"role": "user", "content": user_prompt})
+        messages.add_message("user", conversation_history, user_prompt)
         run_conversation(client, model, conversation_history)
         user_prompt = None
     print("Bye.")
