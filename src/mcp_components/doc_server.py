@@ -14,9 +14,9 @@ __docs__ = {
 
 
 @mcp.resource(
-        uri="docs://documents",
-        description="Names of all documents available for querying",
-        mime_type="text/plain")
+    uri="docs://documents",
+    description="Names of all documents available for querying",
+    mime_type="text/plain")
 def list_docs() -> list[str]:
     return list(__docs__.keys())
 
@@ -24,8 +24,7 @@ def list_docs() -> list[str]:
 @mcp.resource(
     uri="docs://documents/{doc_id}",
     description="Retrieve a single document by its id (name)",
-    mime_type="text/plain"
-)
+    mime_type="text/plain")
 def retrieve_document(doc_id: str) -> str:
     if doc_id not in __docs__:
         raise IndexError("Invalid document id")
