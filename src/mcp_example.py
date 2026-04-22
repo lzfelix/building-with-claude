@@ -1,9 +1,39 @@
+import asyncio
+import sys
+
+import anyio
 import dotenv
-from anthropic import Anthropic
-from helpers import prompt
+from anthropic import AsyncAnthropic
+from mcp_components.client import TrivialClient
+
+
+async def run_chat_loop(client: TrivialClient) -> None:
+    dotenv.load_dotenv("config.env")
+    anthropic = AsyncAnthropic()
+    model = "claude-haiku-4-5"
+
+    async with client:
+        await client.print_capabilities()
+
+        messages = []
+        while True:
+            user_input = (await anyio.to_thread.run_sync(lambda: input("\nYou: "))).strip()
+            if not user_input:
+                continue
+            if user_input.lower() in ("exit", "quit"):
+                break
+
+            messages.append({"role": "user", "content": user_input})
+            response = await anthropic.messages.create(
+                model=model,
+                max_tokens=1024,
+                messages=messages,
+            )
+            assistant_message = response.content[0].text
+            messages.append({"role": "assistant", "content": assistant_message})
+            print(f"\nAssistant: {assistant_message}")
 
 
 if __name__ == "__main__":
-    model = "claude-haiku-4-5"
-    dotenv.load_dotenv()
-    client = Anthropic()
+    docs_client = TrivialClient(command=sys.executable, args=["src/mcp_components/doc_server.py"])
+    asyncio.run(run_chat_loop(docs_client))
