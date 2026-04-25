@@ -4,10 +4,15 @@ import sys
 import anyio
 import dotenv
 from anthropic import AsyncAnthropic
-from mcp_components.client import TrivialClient
+from mcp_components.document_client import DocumentClient
 
 
-async def run_chat_loop(client: TrivialClient) -> None:
+# async def discover_resources(client: DocumentClient) -> list[str]:
+#     return await client.list_resources()
+
+
+
+async def run_chat_loop(client: DocumentClient) -> None:
     dotenv.load_dotenv("config.env")
     anthropic = AsyncAnthropic()
     model = "claude-haiku-4-5"
@@ -35,5 +40,5 @@ async def run_chat_loop(client: TrivialClient) -> None:
 
 
 if __name__ == "__main__":
-    docs_client = TrivialClient(command=sys.executable, args=["src/mcp_components/doc_server.py"])
+    docs_client = DocumentClient()
     asyncio.run(run_chat_loop(docs_client))
