@@ -11,6 +11,7 @@ Just me following Skilljar's Claude [Building with Claude](https://anthropic.ski
 ## Available examples
 
 Detailed write-ups for each example can be found in the [`docs/`](docs/) directory.
+In order to run the examples, from the prpoject root folder, issue `uv run src/<script>.py`
 
 | Example | Description | Source | Report |
 |---|---|---|---|
