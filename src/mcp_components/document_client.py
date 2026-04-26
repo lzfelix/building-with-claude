@@ -5,16 +5,18 @@ import mcp.types
 from pydantic import AnyUrl
 
 from mcp_components.components.base_client import BaseClient
+from mcp_components.components.transports import McpClientTransport
 
 
 class DocumentClient(BaseClient):
     """Example client that connects to an MCP server exposing documents as resources."""
 
     def __init__(self):
-        super().__init__(
-            clientName="document-client",
+        transport = McpClientTransport(
             command="uv",
-            args=["run", "src/mcp_components/document_server.py"])
+            args=["run", "src/mcp_components/document_server.py"],
+        )
+        super().__init__(clientName="document-client", transport=transport)
 
     async def get_resource(self, resource_uri: AnyUrl) -> str:
         contents = await self._fetch_resource(resource_uri)
