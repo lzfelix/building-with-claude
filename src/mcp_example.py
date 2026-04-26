@@ -120,8 +120,11 @@ if __name__ == "__main__":
 
     print("""
     Suggestions of interesting prompts:
-        - What are the depositions for today? (The LLM will auto-discover about the deposition file and return it)
-        - How does the deposition relates to the technical report? (The LLM will read the deposition, read the technical report, and return a response relating the two)
+        - What are the depositions for today? (The LLM will auto-discover about the deposition file and return it).
+        - How does the deposition relates to the technical report? (The LLM will read the deposition, read the technical report, and return a response relating the two).
+        - Create a new document called correlations.md by correlating the technical report with the deposition file (if called at the begining of the session, the LLM will read both files (resource calls), and create a new document (tool call).
+        - List me all available documents.
+        - Show me the conents of the correlations.md document.
     """)
 
     docs_client = DocumentClient()
