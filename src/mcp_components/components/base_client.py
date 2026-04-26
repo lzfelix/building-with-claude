@@ -59,6 +59,9 @@ class BaseClient(McpClientTransport, abc.ABC):
         response = await self._session.read_resource(uri)
         return response.contents
 
+    async def call_tool(self, tool_name: str, arguments: dict) -> mcp.types.CallToolResult:
+        return await self._session.call_tool(tool_name, arguments)
+
     @abc.abstractmethod
     async def get_resource(self, resource_uri: AnyUrl) -> str:
         ...

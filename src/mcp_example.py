@@ -64,7 +64,7 @@ class ChatLoop:
         if block.name == "read_resource":
             return await client.get_resource(AnyUrl(block.input["uri"]))
         if block.name == "call_tool":
-            result = await client.session.call_tool(block.input["tool_name"], block.input.get("arguments", {}))
+            result = await client.call_tool(block.input["tool_name"], block.input.get("arguments", {}))
             return str(result)
         raise ValueError(f"Unknown tool: {block.name}")
 
