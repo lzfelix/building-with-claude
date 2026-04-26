@@ -1,0 +1,24 @@
+@startuml mcp-architecture
+skinparam backgroundColor white
+skinparam defaultFontSize 13
+skinparam ArrowColor #555555
+skinparam nodesep 80
+skinparam ranksep 60
+
+skinparam rectangle {
+    BackgroundColor #F0F4FF
+    BorderColor #7090C0
+}
+
+rectangle "McpClientTransport\nconnection lifecycle" as transport
+rectangle "BaseClient\ngeneric MCP operations" as base
+rectangle "DocumentClient\ndocs:// URI scheme" as docclient
+rectangle "DocumentServer\nFastMCP server" as docserver
+rectangle "ChatLoop\napplication + LLM" as chat
+
+transport -down-> base       : inherits
+base     -down-> docclient   : inherits
+chat     -down-> docclient   : instantiates
+docclient -right-> docserver : stdio subprocess
+
+@enduml
