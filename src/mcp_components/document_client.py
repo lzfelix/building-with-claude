@@ -17,19 +17,12 @@ class DocumentClient(BaseClient):
             args=["run", "src/mcp_components/document_server.py"])
 
     async def get_resource(self, resource_name: str) -> str:
-        """Retrive a single document by its name"""
-
         uri = AnyUrl(f"docs://documents/{resource_name}")
-        response = await self.session.read_resource(uri)
-
-        resource = response.contents[0]
+        contents = await self._fetch_resource(uri)
+        resource = contents[0]
         if isinstance(resource, mcp.types.TextResourceContents):
-            if resource.mimeType == "application/json":
-                return json.loads(resource.text)
-
-            return resource.text
-        else:
-            raise ValueError(f"Unexpected resource contents type: {type(resource)}")
+            return json.loads(resource.text) if resource.mimeType == "application/json" else resource.text
+        raise ValueError(f"Unexpected resource contents type: {type(resource)}")
 
 
 async def main() -> None:

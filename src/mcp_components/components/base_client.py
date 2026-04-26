@@ -2,6 +2,8 @@
 import abc
 
 import mcp
+from pydantic import AnyUrl
+
 from mcp_components.components.transports import McpClientTransport
 
 
@@ -52,6 +54,10 @@ class BaseClient(McpClientTransport, abc.ABC):
         print(f"Resources ({len(resources)}):", *[f"  - {r.uri}" for r in resources], sep="\n")
         print(f"Resource Templates ({len(resource_templates)}):", *[f"  - {rt.uriTemplate}" for rt in resource_templates], sep="\n")
         print(f"Prompts ({len(prompts)}):", *[f"  - {p.name}" for p in prompts], sep="\n")
+
+    async def _fetch_resource(self, uri: AnyUrl) -> list:
+        response = await self.session.read_resource(uri)
+        return response.contents
 
     @abc.abstractmethod
     async def get_resource(self, resource_name: str) -> str:
