@@ -2,7 +2,6 @@ import asyncio
 from contextlib import AsyncExitStack
 
 import anyio
-import mcp.types
 from pydantic import AnyUrl
 from dotenv import load_dotenv
 from anthropic import AsyncAnthropic
@@ -63,9 +62,7 @@ class ChatLoop:
     async def _dispatch_tool(self, block) -> str:
         client = next(c for c in self._mcp_clients if c.clientName == block.input["client_name"])
         if block.name == "read_resource":
-            contents = await client._fetch_resource(AnyUrl(block.input["uri"]))
-            resource = contents[0]
-            return resource.text if isinstance(resource, mcp.types.TextResourceContents) else str(resource)
+            return await client.get_resource(AnyUrl(block.input["uri"]))
         if block.name == "call_tool":
             result = await client.session.call_tool(block.input["tool_name"], block.input.get("arguments", {}))
             return str(result)

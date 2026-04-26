@@ -16,9 +16,8 @@ class DocumentClient(BaseClient):
             command="uv",
             args=["run", "src/mcp_components/document_server.py"])
 
-    async def get_resource(self, resource_name: str) -> str:
-        uri = AnyUrl(f"docs://documents/{resource_name}")
-        contents = await self._fetch_resource(uri)
+    async def get_resource(self, resource_uri: AnyUrl) -> str:
+        contents = await self._fetch_resource(resource_uri)
         resource = contents[0]
         if isinstance(resource, mcp.types.TextResourceContents):
             return json.loads(resource.text) if resource.mimeType == "application/json" else resource.text

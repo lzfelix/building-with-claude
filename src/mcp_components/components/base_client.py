@@ -60,5 +60,5 @@ class BaseClient(McpClientTransport, abc.ABC):
         return response.contents
 
     @abc.abstractmethod
-    async def get_resource(self, resource_name: str) -> str:
+    async def get_resource(self, resource_uri: AnyUrl) -> str:
         ...
