@@ -31,5 +31,15 @@ def retrieve_document(doc_id: str) -> str:
     return __docs__[doc_id]
 
 
+@mcp.tool(
+    description="Create a new document with the given content. "
+        "The document will be immediately available via docs://documents/{doc_id}.")
+def create_document(doc_id: str, content: str) -> str:
+    if doc_id in __docs__:
+        raise ValueError(f"Document '{doc_id}' already exists")
+    __docs__[doc_id] = content
+    return f"Document '{doc_id}' created successfully"
+
+
 if __name__ == "__main__":
     mcp.run()
