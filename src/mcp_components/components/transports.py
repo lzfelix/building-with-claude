@@ -24,11 +24,11 @@ class McpClientTransport:
         self._args = args
 
         self._exit_stack = AsyncExitStack()
-        self._session: Optional[ClientSession] = None
+        self.__session: Optional[ClientSession] = None
 
     async def cleanup(self):
         await self._exit_stack.aclose()
-        self._session = None
+        self.__session = None
 
     async def __aenter__(self):
         await self.connect()
@@ -38,10 +38,10 @@ class McpClientTransport:
         await self.cleanup()
     
     @property
-    def session(self) -> ClientSession:
-        if self._session is None:
+    def _session(self) -> ClientSession:
+        if self.__session is None:
             raise RuntimeError("Not connected. Use 'async with' or call connect() first.")
-        return self._session
+        return self.__session
 
     async def connect(self):
         server_params = StdioServerParameters(
@@ -54,10 +54,10 @@ class McpClientTransport:
         )
 
         _stdio, _write = stdio_transport
-        self._session = await self._exit_stack.enter_async_context(
+        self.__session = await self._exit_stack.enter_async_context(
             ClientSession(_stdio, _write)
         )
-        await self.session.initialize()
+        await self._session.initialize()
 
 class HttpClientTransport:
     """Placeholder for future HTTP transport implementation."""

@@ -29,19 +29,19 @@ class BaseClient(McpClientTransport, abc.ABC):
         return self._clientName
 
     async def list_tools(self) -> list[mcp.types.Tool]:
-        result = await self.session.list_tools()
+        result = await self._session.list_tools()
         return result.tools
     
     async def list_resources(self) -> list[mcp.types.Resource]:
-        result = await self.session.list_resources()
+        result = await self._session.list_resources()
         return result.resources
     
     async def list_prompts(self) -> list[mcp.types.Prompt]:
-        result = await self.session.list_prompts()
+        result = await self._session.list_prompts()
         return result.prompts
 
     async def list_resource_templates(self) -> list[mcp.types.ResourceTemplate]:
-        result = await self.session.list_resource_templates()
+        result = await self._session.list_resource_templates()
         return result.resourceTemplates
 
     async def print_capabilities(self) -> None:
@@ -56,7 +56,7 @@ class BaseClient(McpClientTransport, abc.ABC):
         print(f"Prompts ({len(prompts)}):", *[f"  - {p.name}" for p in prompts], sep="\n")
 
     async def _fetch_resource(self, uri: AnyUrl) -> list:
-        response = await self.session.read_resource(uri)
+        response = await self._session.read_resource(uri)
         return response.contents
 
     @abc.abstractmethod
