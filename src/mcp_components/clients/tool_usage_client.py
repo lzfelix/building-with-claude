@@ -3,7 +3,7 @@ import asyncio
 from pydantic import AnyUrl
 
 from mcp_components.infra.base_client import BaseClient
-from mcp_components.infra.transports import HttpClientTransport
+from mcp_components.infra.transports import HttpTransport
 
 
 class ToolUsageClient(BaseClient):
@@ -14,7 +14,7 @@ class ToolUsageClient(BaseClient):
     """
 
     def __init__(self):
-        transport = HttpClientTransport(
+        transport = HttpTransport(
             url="http://localhost:8001/mcp",
             server_script="src/mcp_components/servers/tool_usage_server.py",
         )

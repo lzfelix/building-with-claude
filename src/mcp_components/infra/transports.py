@@ -73,7 +73,7 @@ class StdioTransport(ClientTransport):
         self.__session = None
 
 
-class HttpClientTransport(ClientTransport):
+class HttpTransport(ClientTransport):
     """MCP client transport over StreamableHTTP.
 
     If server_script is provided, spawns the server as a subprocess (via

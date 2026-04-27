@@ -14,7 +14,7 @@ The MCP client stack is organized into three layers, each with a distinct respon
 
 **`StdioTransport`** implements `ClientTransport` over stdio. It spawns the server as a child process, initializes the MCP session over stdin/stdout, and exposes the session as a protected property. The backing field (`__session`) is name-mangled to prevent access from outside the class.
 
-**`HttpClientTransport`** implements `ClientTransport` over StreamableHTTP. It optionally spawns the server as a subprocess (via `uv run <server_script>`), waits for the HTTP endpoint to accept connections with a configurable retry budget, then initializes the MCP session over the HTTP streams. On cleanup, the MCP session is closed first and then the subprocess is terminated, avoiding broken-pipe errors.
+**`HttpTransport`** implements `ClientTransport` over StreamableHTTP. It optionally spawns the server as a subprocess (via `uv run <server_script>`), waits for the HTTP endpoint to accept connections with a configurable retry budget, then initializes the MCP session over the HTTP streams. On cleanup, the MCP session is closed first and then the subprocess is terminated, avoiding broken-pipe errors.
 
 **`BaseClient`** holds any `ClientTransport` via composition and provides all generic MCP operations: listing tools, resources, resource templates, and prompts; fetching a resource by URI (`_fetch_resource`); and calling a tool (`call_tool`). It declares `get_resource(uri)` as abstract, enforcing that every subclass defines how to interpret and return resource contents. `BaseClient` delegates its async context manager directly to the transport's `connect()` and `cleanup()`.
 
@@ -29,7 +29,7 @@ Nothing in `components/` knows about any specific server or URI scheme.
 - `docs://documents/{doc_id}` — a resource template for fetching a document by id
 - `create_document` — a tool for adding new documents to the collection at runtime
 
-**`ToolUsageClient`** constructs an `HttpClientTransport` (spawning `tool_usage_server.py` on port 8001) and passes it to `BaseClient`. It exposes no resources, so `get_resource` raises `NotImplementedError`. All interaction goes through `call_tool`.
+**`ToolUsageClient`** constructs an `HttpTransport` (spawning `tool_usage_server.py` on port 8001) and passes it to `BaseClient`. It exposes no resources, so `get_resource` raises `NotImplementedError`. All interaction goes through `call_tool`.
 
 **`ToolUsageServer`** is the FastMCP server that `ToolUsageClient` connects to over StreamableHTTP. It exposes four tools:
 - `get_current_datetime` — returns the current date/time in a configurable format
@@ -53,6 +53,6 @@ Nothing in `components/` knows about any specific server or URI scheme.
 
 **`call_tool` is concrete on `BaseClient`.** MCP's tool-calling protocol is fully generic — the server defines the tool, and the session handles serialization. There is no server-specific logic to encapsulate, so no subclass needs to override it.
 
-**`HttpClientTransport` manages the server subprocess lifecycle.** Spawning the server inside the transport (rather than requiring it to be running externally) keeps the demo self-contained, mirroring how `StdioTransport` spawns its stdio subprocess. The subprocess is terminated after the MCP session closes to avoid broken-pipe errors on the server side.
+**`HttpTransport` manages the server subprocess lifecycle.** Spawning the server inside the transport (rather than requiring it to be running externally) keeps the demo self-contained, mirroring how `StdioTransport` spawns its stdio subprocess. The subprocess is terminated after the MCP session closes to avoid broken-pipe errors on the server side.
 
-**The session is fully encapsulated within each transport.** Both `StdioTransport.__session` and `HttpClientTransport.__session` are name-mangled, preventing access from outside their respective classes. Subclasses and `BaseClient` reach the session through the `_session` property.
+**The session is fully encapsulated within each transport.** Both `StdioTransport.__session` and `HttpTransport.__session` are name-mangled, preventing access from outside their respective classes. Subclasses and `BaseClient` reach the session through the `_session` property.
