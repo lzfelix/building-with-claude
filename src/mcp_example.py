@@ -6,9 +6,9 @@ from pydantic import AnyUrl
 from dotenv import load_dotenv
 from anthropic import AsyncAnthropic
 
-from mcp_components.components.base_client import BaseClient
-from mcp_components.document_client import DocumentClient
-from mcp_components.tool_usage_client import ToolUsageClient
+from mcp_components.infra.base_client import BaseClient
+from mcp_components.clients.document_client import DocumentClient
+from mcp_components.clients.tool_usage_client import ToolUsageClient
 
 
 MCP_TOOLS = [

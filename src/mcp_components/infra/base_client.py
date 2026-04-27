@@ -3,7 +3,7 @@ import abc
 import mcp
 from pydantic import AnyUrl
 
-from mcp_components.components.transports import ClientTransport
+from mcp_components.infra.transports import ClientTransport
 
 
 class BaseClient(abc.ABC):
@@ -13,7 +13,7 @@ class BaseClient(abc.ABC):
     hierarchy works over stdio and HTTP without changes to domain subclasses.
 
     BaseClient accesses self._transport._session directly — this is intentional.
-    BaseClient lives in the same components/ package and is the only non-transport
+    BaseClient lives in the same infra/ package and is the only non-transport
     code that needs the raw session.
     """
 

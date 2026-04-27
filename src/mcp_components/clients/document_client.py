@@ -4,8 +4,8 @@ import asyncio
 import mcp.types
 from pydantic import AnyUrl
 
-from mcp_components.components.base_client import BaseClient
-from mcp_components.components.transports import McpClientTransport
+from mcp_components.infra.base_client import BaseClient
+from mcp_components.infra.transports import McpClientTransport
 
 
 class DocumentClient(BaseClient):
@@ -14,7 +14,7 @@ class DocumentClient(BaseClient):
     def __init__(self):
         transport = McpClientTransport(
             command="uv",
-            args=["run", "src/mcp_components/document_server.py"],
+            args=["run", "src/mcp_components/servers/document_server.py"],
         )
         super().__init__(clientName="document-client", transport=transport)
 
