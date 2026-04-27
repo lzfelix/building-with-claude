@@ -6,8 +6,9 @@ from pydantic import AnyUrl
 from dotenv import load_dotenv
 from anthropic import AsyncAnthropic
 
-from mcp_components.components.base_client import BaseClient
-from mcp_components.document_client import DocumentClient
+from mcp_components.infra.base_client import BaseClient
+from mcp_components.clients.document_client import DocumentClient
+from mcp_components.clients.calendar_client import CalendarClient
 
 
 MCP_TOOLS = [
@@ -125,9 +126,13 @@ if __name__ == "__main__":
         - Create a new document called correlations.md by correlating the technical report with the deposition file (if called at the begining of the session, the LLM will read both files (resource calls), and create a new document (tool call).
         - List me all available documents.
         - Show me the conents of the correlations.md document.
+        - What time is it right now?
+        - Set a reminder for tomorrow morning to review the deposition.
+        - List all my reminders.
     """)
 
     docs_client = DocumentClient()
-    chat_loop = ChatLoop(client, model_name, mcp_clients=[docs_client])
+    calendar_client = CalendarClient()
+    chat_loop = ChatLoop(client, model_name, mcp_clients=[docs_client, calendar_client])
 
     asyncio.run(chat_loop.run_chat_loop())

@@ -1,0 +1,33 @@
+import asyncio
+
+from pydantic import AnyUrl
+
+from mcp_components.infra.base_client import BaseClient
+from mcp_components.infra.transports import HttpTransport
+
+
+class CalendarClient(BaseClient):
+    """MCP client connecting to the ToolUsageServer over StreamableHTTP.
+
+    The server is spawned as a subprocess when connect() is called and
+    terminated on cleanup, keeping the demo self-contained.
+    """
+
+    def __init__(self):
+        transport = HttpTransport(
+            url="http://localhost:8001/mcp",
+            server_script="src/mcp_components/servers/calendar_server.py",
+        )
+        super().__init__(clientName="calendar-client", transport=transport)
+
+    async def get_resource(self, resource_uri: AnyUrl) -> str:
+        raise NotImplementedError("CalendarClient exposes no resources.")
+
+
+async def main() -> None:
+    async with CalendarClient() as client:
+        await client.print_capabilities()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
