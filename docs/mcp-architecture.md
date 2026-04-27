@@ -29,9 +29,9 @@ Nothing in `components/` knows about any specific server or URI scheme.
 - `docs://documents/{doc_id}` — a resource template for fetching a document by id
 - `create_document` — a tool for adding new documents to the collection at runtime
 
-**`ToolUsageClient`** constructs an `HttpTransport` (spawning `tool_usage_server.py` on port 8001) and passes it to `BaseClient`. It exposes no resources, so `get_resource` raises `NotImplementedError`. All interaction goes through `call_tool`.
+**`CalendarClient`** constructs an `HttpTransport` (spawning `calendar_server.py` on port 8001) and passes it to `BaseClient`. It exposes no resources, so `get_resource` raises `NotImplementedError`. All interaction goes through `call_tool`.
 
-**`ToolUsageServer`** is the FastMCP server that `ToolUsageClient` connects to over StreamableHTTP. It exposes four tools:
+**`CalendarServer`** is the FastMCP server that `CalendarClient` connects to over StreamableHTTP. It exposes four tools:
 - `get_current_datetime` — returns the current date/time in a configurable format
 - `add_duration_to_datetime` — adds a duration string (e.g. `2h`, `1d`) to a datetime
 - `set_reminder` — stores a reminder message for a given time

@@ -16,8 +16,8 @@ rectangle "HttpTransport\nHTTP + subprocess" as http_transport
 rectangle "BaseClient\ngeneric MCP operations" as base
 rectangle "DocumentClient\ndocs:// URI scheme" as docclient
 rectangle "DocumentServer\nFastMCP / stdio" as docserver
-rectangle "ToolUsageClient\nHTTP MCP client" as toolclient
-rectangle "ToolUsageServer\nFastMCP / HTTP :8001" as toolserver
+rectangle "CalendarClient\nHTTP MCP client" as toolclient
+rectangle "CalendarServer\nFastMCP / HTTP :8001" as toolserver
 rectangle "ChatLoop\napplication + LLM" as chat
 
 transport <|-- stdio_transport   : implements

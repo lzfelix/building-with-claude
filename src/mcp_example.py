@@ -8,7 +8,7 @@ from anthropic import AsyncAnthropic
 
 from mcp_components.infra.base_client import BaseClient
 from mcp_components.clients.document_client import DocumentClient
-from mcp_components.clients.tool_usage_client import ToolUsageClient
+from mcp_components.clients.calendar_client import CalendarClient
 
 
 MCP_TOOLS = [
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     """)
 
     docs_client = DocumentClient()
-    tools_client = ToolUsageClient()
-    chat_loop = ChatLoop(client, model_name, mcp_clients=[docs_client, tools_client])
+    calendar_client = CalendarClient()
+    chat_loop = ChatLoop(client, model_name, mcp_clients=[docs_client, calendar_client])
 
     asyncio.run(chat_loop.run_chat_loop())
