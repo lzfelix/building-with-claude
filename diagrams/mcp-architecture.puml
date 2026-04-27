@@ -11,7 +11,7 @@ skinparam rectangle {
 }
 
 rectangle "ClientTransport\nABC — connection lifecycle" as transport
-rectangle "McpClientTransport\nstdio subprocess" as stdio_transport
+rectangle "StdioTransport\nstdio subprocess" as stdio_transport
 rectangle "HttpClientTransport\nHTTP + subprocess" as http_transport
 rectangle "BaseClient\ngeneric MCP operations" as base
 rectangle "DocumentClient\ndocs:// URI scheme" as docclient

@@ -12,7 +12,7 @@ The MCP client stack is organized into three layers, each with a distinct respon
 
 **`ClientTransport`** is the abstract base for all transport implementations. It owns the async context manager protocol (`__aenter__` / `__aexit__`) once, so subclasses don't repeat it. Every concrete transport must implement `connect()`, `cleanup()`, and the `_session` property.
 
-**`McpClientTransport`** implements `ClientTransport` over stdio. It spawns the server as a child process, initializes the MCP session over stdin/stdout, and exposes the session as a protected property. The backing field (`__session`) is name-mangled to prevent access from outside the class.
+**`StdioTransport`** implements `ClientTransport` over stdio. It spawns the server as a child process, initializes the MCP session over stdin/stdout, and exposes the session as a protected property. The backing field (`__session`) is name-mangled to prevent access from outside the class.
 
 **`HttpClientTransport`** implements `ClientTransport` over StreamableHTTP. It optionally spawns the server as a subprocess (via `uv run <server_script>`), waits for the HTTP endpoint to accept connections with a configurable retry budget, then initializes the MCP session over the HTTP streams. On cleanup, the MCP session is closed first and then the subprocess is terminated, avoiding broken-pipe errors.
 
@@ -22,7 +22,7 @@ Nothing in `components/` knows about any specific server or URI scheme.
 
 ### Domain layer (`mcp_components/`)
 
-**`DocumentClient`** constructs a `McpClientTransport` internally (spawning `document_server.py` as a subprocess) and passes it to `BaseClient`. It implements `get_resource(uri)` for the `docs://` scheme: delegates the MCP fetch to `_fetch_resource`, then owns all response parsing — picking `contents[0]`, checking the mime type, and decoding JSON if needed.
+**`DocumentClient`** constructs a `StdioTransport` internally (spawning `document_server.py` as a subprocess) and passes it to `BaseClient`. It implements `get_resource(uri)` for the `docs://` scheme: delegates the MCP fetch to `_fetch_resource`, then owns all response parsing — picking `contents[0]`, checking the mime type, and decoding JSON if needed.
 
 **`DocumentServer`** is the FastMCP server that `DocumentClient` connects to over stdio. It exposes:
 - `docs://documents` — a static resource listing all document names
@@ -43,7 +43,7 @@ Nothing in `components/` knows about any specific server or URI scheme.
 
 ## Key design decisions
 
-**Composition over inheritance for `BaseClient`.** The original design had `BaseClient` extend `McpClientTransport` directly, which hardwired stdio as the only transport. Switching to composition (`BaseClient` holds a `ClientTransport`) makes the transport pluggable without any changes to `BaseClient` or its subclasses. Each domain client constructs the transport it needs and passes it up.
+**Composition over inheritance for `BaseClient`.** The original design had `BaseClient` extend `StdioTransport` directly, which hardwired stdio as the only transport. Switching to composition (`BaseClient` holds a `ClientTransport`) makes the transport pluggable without any changes to `BaseClient` or its subclasses. Each domain client constructs the transport it needs and passes it up.
 
 **`BaseClient` accesses `self._transport._session` directly.** This crosses one protected boundary by design. `BaseClient` lives in the same `components/` package and is the only non-transport code that needs the raw `ClientSession`. The single-underscore convention signals "internal to this package," which applies here.
 
@@ -53,6 +53,6 @@ Nothing in `components/` knows about any specific server or URI scheme.
 
 **`call_tool` is concrete on `BaseClient`.** MCP's tool-calling protocol is fully generic — the server defines the tool, and the session handles serialization. There is no server-specific logic to encapsulate, so no subclass needs to override it.
 
-**`HttpClientTransport` manages the server subprocess lifecycle.** Spawning the server inside the transport (rather than requiring it to be running externally) keeps the demo self-contained, mirroring how `McpClientTransport` spawns its stdio subprocess. The subprocess is terminated after the MCP session closes to avoid broken-pipe errors on the server side.
+**`HttpClientTransport` manages the server subprocess lifecycle.** Spawning the server inside the transport (rather than requiring it to be running externally) keeps the demo self-contained, mirroring how `StdioTransport` spawns its stdio subprocess. The subprocess is terminated after the MCP session closes to avoid broken-pipe errors on the server side.
 
-**The session is fully encapsulated within each transport.** Both `McpClientTransport.__session` and `HttpClientTransport.__session` are name-mangled, preventing access from outside their respective classes. Subclasses and `BaseClient` reach the session through the `_session` property.
+**The session is fully encapsulated within each transport.** Both `StdioTransport.__session` and `HttpClientTransport.__session` are name-mangled, preventing access from outside their respective classes. Subclasses and `BaseClient` reach the session through the `_session` property.

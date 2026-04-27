@@ -5,14 +5,14 @@ import mcp.types
 from pydantic import AnyUrl
 
 from mcp_components.infra.base_client import BaseClient
-from mcp_components.infra.transports import McpClientTransport
+from mcp_components.infra.transports import StdioTransport
 
 
 class DocumentClient(BaseClient):
     """Example client that connects to an MCP server exposing documents as resources."""
 
     def __init__(self):
-        transport = McpClientTransport(
+        transport = StdioTransport(
             command="uv",
             args=["run", "src/mcp_components/servers/document_server.py"],
         )

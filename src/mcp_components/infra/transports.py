@@ -34,7 +34,7 @@ class ClientTransport(abc.ABC):
     async def cleanup(self) -> None: ...
 
 
-class McpClientTransport(ClientTransport):
+class StdioTransport(ClientTransport):
     """MCP client transport over stdio.
 
     Spawns the server as a child process and communicates via stdin/stdout.
