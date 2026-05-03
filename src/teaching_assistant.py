@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from dotenv import load_dotenv
 from anthropic import Anthropic
 from anthropic.types import MessageParam
@@ -44,6 +44,7 @@ class TopicState:
     difficulty: str = "medium"
     correct: float = 0.0
     asked: int = 0
+    asked_questions: list[str] = field(default_factory=list)
 
     @property
     def score_pct(self) -> float:
@@ -134,10 +135,15 @@ def ask_question(
     state: TopicState,
     q_num: int,
     total: int,
-) -> None:
+) -> str:
+    no_repeat = ""
+    if state.asked_questions:
+        prior = "\n".join(f"  - {q}" for q in state.asked_questions)
+        no_repeat = f"\nDo not ask about the same concept as any of these previous questions:\n{prior}"
+
     context = (
         f"[Topic: {state.name} | Difficulty: {state.difficulty} | "
-        f"Score so far: {state.correct}/{state.asked}]\n\n"
+        f"Score so far: {state.correct:g}/{state.asked}]{no_repeat}\n\n"
         f"Ask me question {q_num} of {total} for this topic. "
         f"Difficulty: {state.difficulty}."
     )
@@ -156,7 +162,9 @@ def ask_question(
             buffer.append(chunk)
     print()
 
-    messages.add_message("assistant", conversation, "".join(buffer))
+    question_text = "".join(buffer)
+    messages.add_message("assistant", conversation, question_text)
+    return question_text
 
 
 def evaluate_answer(
@@ -255,7 +263,8 @@ def main() -> None:
         print("─" * 50)
 
         for q_num in range(1, QUESTIONS_PER_TOPIC + 1):
-            ask_question(client, system_prompt, conversation, state, q_num, QUESTIONS_PER_TOPIC)
+            question = ask_question(client, system_prompt, conversation, state, q_num, QUESTIONS_PER_TOPIC)
+            state.asked_questions.append(question[:120])
 
             user_answer = input("Your answer: ").strip()
             if user_answer.lower() == "exit":
