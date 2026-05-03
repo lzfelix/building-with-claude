@@ -140,7 +140,7 @@ def ask_question(
     )
     messages.add_message("user", conversation, context)
 
-    print(f"\nQ{q_num}/{total}: ", end="", flush=True)
+    print(f"\nQ{q_num}/{total} [{state.difficulty}]: ", end="", flush=True)
     buffer: list[str] = []
     with client.messages.stream(
         model=MODEL,
