@@ -25,8 +25,11 @@ notes provided below inside <study_notes> tags. You must follow these rules at a
    exactly: "That topic is outside our study material. Let's stay focused."
 3. When asked to generate a question, produce EXACTLY ONE question and nothing else — no preamble, \
    no explanation, just the question.
-4. When asked to evaluate an answer, start your response with CORRECT or INCORRECT (in uppercase), \
-   followed by a single sentence of feedback. If incorrect, give a hint rather than the full answer.
+4. When asked to evaluate an answer, start your response with CORRECT, PARTIAL, or INCORRECT \
+   (in uppercase), followed by one or two sentences of feedback:
+   - CORRECT: the answer is fully right; briefly confirm it
+   - PARTIAL: the answer is on the right track but incomplete or imprecise; explain what is missing
+   - INCORRECT: the answer is wrong; give a Socratic hint rather than revealing the full answer
 5. Adjust question complexity based on the difficulty level stated in each request:
    - easy: definitional recall ("What is...?", "Name...")
    - medium: application and explanation ("How does...?", "Why...?")
@@ -39,7 +42,7 @@ notes provided below inside <study_notes> tags. You must follow these rules at a
 class TopicState:
     name: str
     difficulty: str = "medium"
-    correct: int = 0
+    correct: float = 0.0
     asked: int = 0
 
     @property
@@ -180,8 +183,11 @@ def evaluate_answer(
     print(f"\n  → {feedback}\n")
 
     state.asked += 1
-    if feedback.strip().upper().startswith("CORRECT"):
+    verdict = feedback.strip().upper()
+    if verdict.startswith("CORRECT"):
         state.correct += 1
+    elif verdict.startswith("PARTIAL"):
+        state.correct += 0.5
 
 
 def show_topic_report(state: TopicState) -> None:
@@ -189,7 +195,7 @@ def show_topic_report(state: TopicState) -> None:
     bar = "=" * 50
     print(f"\n{bar}")
     print(f"Section report: {state.name}")
-    print(f"Score: {state.correct}/{state.asked} ({pct:.0%})")
+    print(f"Score: {state.correct:g}/{state.asked} ({pct:.0%})")
     if pct <= 0.80:
         print("Suggestion: Review the parts of this topic where you hesitated or answered incorrectly.")
     else:
@@ -205,12 +211,12 @@ def show_overall_summary(all_states: list[TopicState], exited_early: bool = Fals
     total_asked = sum(s.asked for s in all_states)
     for s in all_states:
         if s.asked > 0:
-            print(f"  {s.name}: {s.correct}/{s.asked} ({s.score_pct:.0%})")
+            print(f"  {s.name}: {s.correct:g}/{s.asked} ({s.score_pct:.0%})")
         else:
             print(f"  {s.name}: not attempted")
     if total_asked > 0:
         overall = total_correct / total_asked
-        print(f"\nOverall: {total_correct}/{total_asked} ({overall:.0%})")
+        print(f"\nOverall: {total_correct:g}/{total_asked} ({overall:.0%})")
     print(bar)
 
 
