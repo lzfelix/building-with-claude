@@ -198,17 +198,41 @@ def evaluate_answer(
         state.correct += 0.5
 
 
-def show_topic_report(state: TopicState) -> None:
+def generate_topic_report(
+    client: Anthropic,
+    system_prompt: list[dict],
+    conversation: list[MessageParam],
+    state: TopicState,
+) -> None:
     pct = state.score_pct
+    suggestion_instruction = (
+        "The student did very well — do NOT include improvement suggestions."
+        if pct > 0.80
+        else "Include concrete suggestions for what to review, referencing specific concepts from the study notes."
+    )
+    prompt = (
+        f"The student has finished the '{state.name}' section. "
+        f"Score: {state.correct:g}/{state.asked} ({pct:.0%}). "
+        "Write a brief section report (3-5 sentences) covering:\n"
+        "1. Which concepts the student demonstrated solid understanding of\n"
+        "2. Which specific concepts they struggled with (based on incorrect or partial answers)\n"
+        f"3. {suggestion_instruction}"
+    )
+    messages.add_message("user", conversation, prompt)
+
     bar = "=" * 50
     print(f"\n{bar}")
-    print(f"Section report: {state.name}")
-    print(f"Score: {state.correct:g}/{state.asked} ({pct:.0%})")
-    if pct <= 0.80:
-        print("Suggestion: Review the parts of this topic where you hesitated or answered incorrectly.")
-    else:
-        print("Great job on this section!")
-    print(bar)
+    print(f"Section report: {state.name}  |  Score: {state.correct:g}/{state.asked} ({pct:.0%})")
+    print("─" * 50)
+    with client.messages.stream(
+        model=MODEL,
+        max_tokens=512,
+        system=system_prompt,
+        messages=conversation,
+    ) as stream:
+        for chunk in stream.text_stream:
+            print(chunk, end="", flush=True)
+    print(f"\n{bar}")
 
 
 def show_overall_summary(all_states: list[TopicState], exited_early: bool = False) -> None:
@@ -278,7 +302,7 @@ def main() -> None:
         if exited_early:
             break
 
-        show_topic_report(state)
+        generate_topic_report(client, system_prompt, conversation, state)
 
     show_overall_summary(all_states, exited_early=exited_early)
 
